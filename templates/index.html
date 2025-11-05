@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Search Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Search</h1>
+            <p>Intelligent search with enhanced capabilities</p>
+        </header>
+        
+        <div class="search-container">
+            <form id="searchForm">
+                <div class="search-box">
+                    <input type="text" id="searchQuery" placeholder="What are you looking for?" required>
+                    <input type="text" id="siteFilter" placeholder="Specific website (optional)">
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+            
+            <div class="quick-filters">
+                <button class="filter-btn" data-filter="login pages">Login Pages</button>
+                <button class="filter-btn" data-filter="pdf documents">PDF Files</button>
+                <button class="filter-btn" data-filter="database admin">Databases</button>
+                <button class="filter-btn" data-filter="directory listing">Directories</button>
+                <button class="filter-btn" data-filter="backup files">Backups</button>
+            </div>
+        </div>
+        
+        <div id="results" class="results-container" style="display: none;">
+            <div class="result-header">
+                <h3>Search Results</h3>
+                <div id="queryInfo"></div>
+            </div>
+            
+            <div class="result-actions">
+                <button id="openGoogle" class="action-btn primary">Open in Google</button>
+                <button id="copyQuery" class="action-btn">Copy Query</button>
+                <button id="newSearch" class="action-btn">New Search</button>
+            </div>
+            
+            <div class="result-details">
+                <div class="detail-section">
+                    <h4>Generated Query:</h4>
+                    <code id="dorkQuery"></code>
+                </div>
+                
+                <div class="detail-section" id="intentSection" style="display: none;">
+                    <h4>Detected Intent:</h4>
+                    <div id="detectedIntents"></div>
+                </div>
+                
+                <div class="detail-section" id="suggestionSection" style="display: none;">
+                    <h4>Related Searches:</h4>
+                    <div id="suggestions"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h3>Example Searches:</h3>
+            <div class="example-grid">
+                <div class="example-item" data-example="confidential documents company">
+                    <strong>Document Search:</strong> "confidential documents company"
+                </div>
+                <div class="example-item" data-example="admin login panel">
+                    <strong>Admin Panels:</strong> "admin login panel"
+                </div>
+                <div class="example-item" data-example="database backup files">
+                    <strong>Database Files:</strong> "database backup files"
+                </div>
+                <div class="example-item" data-example="camera surveillance system">
+                    <strong>IP Cameras:</strong> "camera surveillance system"
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
