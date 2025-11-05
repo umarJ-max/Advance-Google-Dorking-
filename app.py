@@ -169,5 +169,7 @@ def generate_suggestions(query):
     return suggestions[:3]  # Limit to 3 suggestions
 
 # For Vercel deployment
+app = app  # Ensure app is available at module level
+
 if __name__ == '__main__':
     app.run(debug=False)
