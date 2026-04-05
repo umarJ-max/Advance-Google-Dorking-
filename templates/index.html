@@ -3,86 +3,802 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Google Dorking Tool</title>
+    <title>DorkLab — Advanced Google Dorking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔍 Advanced Google Dorking</h1>
-            <p>Intelligent search queries with enhanced Google dorking capabilities. Transform simple searches into powerful reconnaissance tools.</p>
-        </header>
-        
-        <div class="search-container">
-            <form id="searchForm">
-                <div class="search-box">
-                    <input type="text" id="searchQuery" placeholder="What are you looking for?" required>
-                    <input type="text" id="siteFilter" placeholder="Specific website (optional)">
-                    <button type="submit">Search</button>
-                </div>
-            </form>
-            
-            <div class="quick-filters">
-                <button class="filter-btn" data-filter="login pages">🔐 Login Pages</button>
-                <button class="filter-btn" data-filter="pdf documents">📄 PDF Files</button>
-                <button class="filter-btn" data-filter="database admin">🗄 Databases</button>
-                <button class="filter-btn" data-filter="directory listing">📁 Directories</button>
-                <button class="filter-btn" data-filter="backup files">💾 Backups</button>
-            </div>
+
+<div class="noise"></div>
+
+<header>
+    <div class="header-inner">
+        <div class="logo">
+            <span class="logo-icon">◈</span>
+            <span class="logo-text">DorkLab</span>
+            <span class="logo-tag">OSINT</span>
         </div>
-        
-        <div id="results" class="results-container" style="display: none;">
-            <div class="result-header">
-                <h3>Search Results</h3>
-                <div id="queryInfo"></div>
-            </div>
-            
-            <div class="result-actions">
-                <button id="openGoogle" class="action-btn primary">🔍 Open in Google</button>
-                <button id="copyQuery" class="action-btn">📋 Copy Query</button>
-                <button id="newSearch" class="action-btn">✨ New Search</button>
-            </div>
-            
-            <div class="result-details">
-                <div class="detail-section">
-                    <h4>Generated Query:</h4>
-                    <code id="dorkQuery"></code>
-                </div>
-                
-                <div class="detail-section" id="intentSection" style="display: none;">
-                    <h4>Detected Intent:</h4>
-                    <div id="detectedIntents"></div>
-                </div>
-                
-                <div class="detail-section" id="suggestionSection" style="display: none;">
-                    <h4>Related Searches:</h4>
-                    <div id="suggestions"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="examples">
-            <h3>Example Searches:</h3>
-            <div class="example-grid">
-                <div class="example-item" data-example="confidential documents company">
-                    <strong>Document Search:</strong> "confidential documents company"
-                </div>
-                <div class="example-item" data-example="admin login panel">
-                    <strong>Admin Panels:</strong> "admin login panel"
-                </div>
-                <div class="example-item" data-example="database backup files">
-                    <strong>Database Files:</strong> "database backup files"
-                </div>
-                <div class="example-item" data-example="camera surveillance system">
-                    <strong>IP Cameras:</strong> "camera surveillance system"
-                </div>
-            </div>
-        </div>
+        <p class="header-sub">Professional Google Dorking — Find what the internet tries to hide.</p>
     </div>
-    
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</header>
+
+<main>
+
+    <!-- QUERY BUILDER -->
+    <section class="query-section">
+        <div class="section-label">Query Builder</div>
+        <div class="builder-grid">
+            <div class="builder-field">
+                <label>Search Topic / Keywords</label>
+                <input type="text" id="searchQuery" placeholder="e.g. target company, username, domain...">
+            </div>
+            <div class="builder-field">
+                <label>Site Filter <span class="optional">(optional)</span></label>
+                <input type="text" id="siteFilter" placeholder="e.g. example.com">
+            </div>
+        </div>
+        <div class="builder-actions">
+            <button id="buildBtn" class="btn-primary">
+                <span class="btn-icon">⟳</span> Build Query
+            </button>
+            <button id="clearBtn" class="btn-ghost">Clear</button>
+        </div>
+        <div id="outputBox" class="output-box hidden">
+            <div class="output-label">Generated Dork</div>
+            <div class="output-query" id="outputQuery"></div>
+            <div class="output-actions">
+                <button id="openGoogle" class="btn-primary">Open in Google ↗</button>
+                <button id="copyDork" class="btn-ghost">Copy</button>
+            </div>
+            <div id="intentBadges" class="intent-row"></div>
+        </div>
+    </section>
+
+    <!-- OPERATOR REFERENCE -->
+    <section class="ref-section">
+        <div class="section-label">Operator Reference</div>
+        <div class="operators-grid">
+            <div class="op-card">
+                <span class="op-code">site:</span>
+                <div class="op-desc">Restrict results to a specific domain</div>
+                <div class="op-ex">site:example.com</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">inurl:</span>
+                <div class="op-desc">Find text in the URL</div>
+                <div class="op-ex">inurl:admin/login</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">intitle:</span>
+                <div class="op-desc">Find text in the page title</div>
+                <div class="op-ex">intitle:"index of"</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">intext:</span>
+                <div class="op-desc">Find text in the page body</div>
+                <div class="op-ex">intext:"password"</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">filetype:</span>
+                <div class="op-desc">Filter by file extension</div>
+                <div class="op-ex">filetype:pdf</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">cache:</span>
+                <div class="op-desc">View Google's cached version</div>
+                <div class="op-ex">cache:example.com</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">related:</span>
+                <div class="op-desc">Find similar websites</div>
+                <div class="op-ex">related:example.com</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">link:</span>
+                <div class="op-desc">Find pages linking to a URL</div>
+                <div class="op-ex">link:example.com</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">allinurl:</span>
+                <div class="op-desc">All words must appear in URL</div>
+                <div class="op-ex">allinurl:login admin</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">allintitle:</span>
+                <div class="op-desc">All words must appear in title</div>
+                <div class="op-ex">allintitle:index of passwd</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">-keyword</span>
+                <div class="op-desc">Exclude a keyword from results</div>
+                <div class="op-ex">filetype:log -cvs</div>
+            </div>
+            <div class="op-card">
+                <span class="op-code">"exact phrase"</span>
+                <div class="op-desc">Match exact string</div>
+                <div class="op-ex">"index of" "parent dir"</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DORK LIBRARY -->
+    <section class="library-section">
+        <div class="section-label">Dork Library</div>
+        <p class="library-desc">Click any dork to instantly load it into the builder. Paste your target in the Site Filter to narrow results.</p>
+
+        <div class="tabs" id="tabBar">
+            <button class="tab active" data-tab="exposure">📂 File Exposure</button>
+            <button class="tab" data-tab="auth">🔐 Login & Auth</button>
+            <button class="tab" data-tab="databases">🗄 Databases</button>
+            <button class="tab" data-tab="config">⚙️ Config Files</button>
+            <button class="tab" data-tab="cameras">📷 Cameras</button>
+            <button class="tab" data-tab="network">🌐 Network</button>
+            <button class="tab" data-tab="intel">🕵 People Intel</button>
+            <button class="tab" data-tab="vulnerabilities">⚠️ Vulnerabilities</button>
+        </div>
+
+        <div class="dork-panels">
+
+            <!-- FILE EXPOSURE -->
+            <div class="dork-panel active" id="panel-exposure">
+                <div class="panel-intro">Find sensitive documents, backups, and exposed file directories.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='intitle:"index of"' data-desc="Open directory listings — browse server file trees">
+                        <div class="dork-query">intitle:"index of"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Open Directory Listing</div>
+                            <div class="dork-explain">Finds web servers with directory browsing enabled. You can explore the full file structure of the server and often find sensitive documents.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"index of" "parent directory"' data-desc="Root-level open directories">
+                        <div class="dork-query">intitle:"index of" "parent directory"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Parent Directory Access</div>
+                            <div class="dork-explain">Targets open directories showing the "parent directory" link — strong indicator of unrestricted access to the server file system.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:pdf "confidential" OR "internal use only"' data-desc="Confidential PDF documents">
+                        <div class="dork-query">filetype:pdf "confidential" OR "internal use only"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Confidential PDF Documents</div>
+                            <div class="dork-explain">Searches for PDF files labeled confidential or internal. Companies often accidentally expose internal reports, memos, and data to Google indexing.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:xls OR filetype:xlsx intext:password' data-desc="Excel files containing passwords">
+                        <div class="dork-query">filetype:xls OR filetype:xlsx intext:password</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Excel Files with Passwords</div>
+                            <div class="dork-explain">Finds spreadsheet files that contain the word "password" in their content — often credential sheets, IT inventory files, or key management docs.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:sql "INSERT INTO" "users"' data-desc="Exposed SQL database dumps">
+                        <div class="dork-query">filetype:sql "INSERT INTO" "users"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">SQL Database Dumps</div>
+                            <div class="dork-explain">SQL dump files exported from databases. These files often contain usernames, hashed or plaintext passwords, and full database schemas.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:bak OR filetype:backup OR filetype:old' data-desc="Backup files left on servers">
+                        <div class="dork-query">filetype:bak OR filetype:backup OR filetype:old</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Backup Files</div>
+                            <div class="dork-explain">Backup copies of files often contain older config data, credentials, or source code. Developers frequently forget to restrict access to these.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:log inurl:"password.log"' data-desc="Password log files">
+                        <div class="dork-query">filetype:log inurl:"password.log"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Password Log Files</div>
+                            <div class="dork-explain">Log files that explicitly contain cleartext usernames and passwords. These are sometimes generated by misconfigured applications.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:dat "password.dat"' data-desc="Plaintext password data files">
+                        <div class="dork-query">filetype:dat "password.dat"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Password Data Files</div>
+                            <div class="dork-explain">Finds .dat files named password.dat — these often contain plaintext username/password combinations used by older applications.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:wab wab' data-desc="Microsoft Outlook address books">
+                        <div class="dork-query">filetype:wab wab</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Outlook Address Books</div>
+                            <div class="dork-explain">Microsoft Outlook WAB (Windows Address Book) files. Contains contact details, email addresses, phone numbers — useful for OSINT on individuals and organizations.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"# Dumping data for table" "users"' data-desc="MySQL table dump with user data">
+                        <div class="dork-query">"# Dumping data for table" "users"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">MySQL User Table Dumps</div>
+                            <div class="dork-explain">Exported MySQL dumps with user tables. These contain full database records including usernames, emails, and hashed or plaintext passwords.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:mbx intext:Subject' data-desc="Old Outlook or Eudora mailbox files">
+                        <div class="dork-query">filetype:mbx intext:Subject</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Mailbox Files (MBX)</div>
+                            <div class="dork-explain">Outlook v1-4 or Eudora mailbox files exposed on the web. These contain email content, sender addresses, and other communication metadata.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='e-mail address filetype:csv' data-desc="Exported email address lists in CSV">
+                        <div class="dork-query">e-mail address filetype:csv</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Exported Email Lists (CSV)</div>
+                            <div class="dork-explain">Email contact lists exported in CSV format. Often dumped from CRM systems or mailing software — can contain names, phone numbers, and full contact details.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGIN & AUTH -->
+            <div class="dork-panel" id="panel-auth">
+                <div class="panel-intro">Locate exposed admin panels, login portals, and authentication pages.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='inurl:admin/login OR inurl:admin/signin OR inurl:admin_login' data-desc="Admin panel login pages">
+                        <div class="dork-query">inurl:admin/login OR inurl:admin/signin</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Admin Login Pages</div>
+                            <div class="dork-explain">Finds admin panel login pages. Many use default credentials or are vulnerable to brute force. Combine with site: to target a specific domain.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Login" inurl:login.php' data-desc="PHP-based login pages">
+                        <div class="dork-query">intitle:"Login" inurl:login.php</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP Login Pages</div>
+                            <div class="dork-explain">Targets PHP login forms. PHP pages are often unpatched and vulnerable to SQL injection or weak password authentication.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"phpMyAdmin" "Welcome to phpMyAdmin"' data-desc="phpMyAdmin database panels">
+                        <div class="dork-query">intitle:"phpMyAdmin" "Welcome to phpMyAdmin"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">phpMyAdmin Panels</div>
+                            <div class="dork-explain">Database admin panels with public access. Many are left open with default credentials (root with no password). Direct database access = full data exposure.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:"exchange/logon.asp" OR intitle:"Microsoft Outlook Web Access - Logon"' data-desc="Outlook Web Access portals">
+                        <div class="dork-query">inurl:"exchange/logon.asp" OR intitle:"Outlook Web Access"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Outlook Web Access (OWA)</div>
+                            <div class="dork-explain">Microsoft Exchange email login portals. OWA exposes the exchange server and can be targeted for password spraying attacks to gain internal email access.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:root.asp?acs=anon' data-desc="OWA public folders without auth">
+                        <div class="dork-query">inurl:root.asp?acs=anon</div>
+                        <div class="dork-info">
+                            <div class="dork-title">OWA Public Folders (Anonymous)</div>
+                            <div class="dork-explain">Outlook Web Access public folders accessible anonymously. Allows browsing the Exchange address book and public folders without any login credential.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"ZyXEL Prestige Router" "Enter password"' data-desc="ZyXEL router login pages">
+                        <div class="dork-query">intitle:"ZyXEL Prestige Router" "Enter password"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ZyXEL Router Login</div>
+                            <div class="dork-explain">Authentication screen for ZyXEL Prestige routers exposed to the internet. Default credentials are commonly unchanged — admin/1234 or admin/admin.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Dell Remote Access Controller"' data-desc="Dell DRAC server management">
+                        <div class="dork-query">intitle:"Dell Remote Access Controller"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Dell Remote Access Controller</div>
+                            <div class="dork-explain">DRAC allows full out-of-band remote administration of Dell servers. If exposed, attackers gain OS-level control even if the server is offline.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"please log in" inurl:login' data-desc="Generic login portals">
+                        <div class="dork-query">"please log in" inurl:login</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Generic Login Portals</div>
+                            <div class="dork-explain">Casts a wide net for login forms using common phrasing. Good starting point for reconnaissance when you don't know what platform the target uses.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:reg reg +intext:"defaultusername" +intext:"defaultpassword"' data-desc="Windows registry files with credentials">
+                        <div class="dork-query">filetype:reg reg +intext:"defaultusername" +intext:"defaultpassword"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Windows Registry Credential Files</div>
+                            <div class="dork-explain">Exported Windows Registry files containing saved default usernames and passwords. These are often left exposed on public shares or FTP servers.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:metaframexp/default/login.asp | intitle:"Metaframe XP Login"' data-desc="Citrix Metaframe portals">
+                        <div class="dork-query">inurl:metaframexp/default/login.asp</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Citrix Metaframe Login</div>
+                            <div class="dork-explain">Citrix remote access portals. Insecure configurations allow attackers to profile a network and potentially access internal applications remotely.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATABASES -->
+            <div class="dork-panel" id="panel-databases">
+                <div class="panel-intro">Discover exposed databases, connection files, and database management interfaces.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='filetype:inc intext:mysql_connect' data-desc="PHP files with DB connection strings">
+                        <div class="dork-query">filetype:inc intext:mysql_connect</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP Database Connection Files</div>
+                            <div class="dork-explain">.INC files contain PHP code with unencrypted database credentials. The mysql_connect function handles authentication — exposing host, username, and password.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"index of" mysql.conf OR mysql_config' data-desc="MySQL configuration files">
+                        <div class="dork-query">intitle:"index of" mysql.conf OR mysql_config</div>
+                        <div class="dork-info">
+                            <div class="dork-title">MySQL Configuration Files</div>
+                            <div class="dork-explain">MySQL config files expose port numbers, version info, and server paths. Combined with other dorks, attackers can map the full database setup.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:sql +password' data-desc="SQL files with password data">
+                        <div class="dork-query">filetype:sql +password</div>
+                        <div class="dork-info">
+                            <div class="dork-title">SQL Files with Passwords</div>
+                            <div class="dork-explain">Database SQL files containing the word "password". These are often migration scripts or backups with embedded credentials or user tables.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:sql +IDENTIFIED BY -cvs' data-desc="SQL files with database permissions">
+                        <div class="dork-query">filetype:sql +IDENTIFIED BY -cvs</div>
+                        <div class="dork-info">
+                            <div class="dork-title">SQL GRANT Statements</div>
+                            <div class="dork-explain">SQL scripts using IDENTIFIED BY to set database user permissions. These often contain plaintext or encrypted passwords used for database authentication.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:"/database/comersus.mdb"' data-desc="Comersus e-commerce database">
+                        <div class="dork-query">inurl:"/database/comersus.mdb"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Comersus Shopping Cart Database</div>
+                            <div class="dork-explain">Access database file from the Comersus e-commerce platform. Contains full customer records, order history, and payment data from online stores.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:mdb inurl:users.mdb' data-desc="Microsoft Access user databases">
+                        <div class="dork-query">filetype:mdb inurl:users.mdb</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Access User Databases</div>
+                            <div class="dork-explain">Microsoft Access databases named "users.mdb" used as password stores. Many are completely unprotected and downloadable directly.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:ldb admin' data-desc="Access database lock files">
+                        <div class="dork-query">filetype:ldb admin</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Access Lock Files (.ldb)</div>
+                            <div class="dork-explain">Lock files always share the same name as their database. By replacing .ldb with .mdb in the URL, attackers can directly download the parent database.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"index of /phpmyadmin" modified' data-desc="phpMyAdmin database admin panels">
+                        <div class="dork-query">intitle:"index of /phpmyadmin"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">phpMyAdmin Index</div>
+                            <div class="dork-explain">Open directory listing for phpMyAdmin installations. From here, attackers can access the full database management UI and run arbitrary SQL queries.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFIG FILES -->
+            <div class="dork-panel" id="panel-config">
+                <div class="panel-intro">Find exposed configuration files that reveal server setup, credentials, and architecture.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='inurl:php.ini filetype:ini' data-desc="PHP configuration files">
+                        <div class="dork-query">inurl:php.ini filetype:ini</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP Configuration (php.ini)</div>
+                            <div class="dork-explain">PHP's main configuration file. Contains default database credentials, server paths, error settings, and sometimes sensitive initialization variables.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:conf inurl:firewall -intitle:cvs' data-desc="Firewall configuration files">
+                        <div class="dork-query">filetype:conf inurl:firewall -intitle:cvs</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Firewall Configuration Files</div>
+                            <div class="dork-explain">Firewall config files reveal allowed/denied IP rules, ports, and network topology. Attackers use this to identify open paths through the firewall.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:conf inurl:proftpd.conf -sample' data-desc="ProFTPD FTP server config">
+                        <div class="dork-query">filetype:conf inurl:proftpd.conf -sample</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ProFTPD FTP Configuration</div>
+                            <div class="dork-explain">FTP server configuration exposing installation paths, log file locations, generic usernames, and associated group names for the FTP service.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:conf slapd.conf' data-desc="LDAP server configuration">
+                        <div class="dork-query">filetype:conf slapd.conf</div>
+                        <div class="dork-info">
+                            <div class="dork-title">OpenLDAP Configuration</div>
+                            <div class="dork-explain">Configuration for OpenLDAP server including the root password in cleartext, along with full paths and permissions for all related applications.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:"slapd.conf" intext:"rootpw" -manpage -"Manual Page" -man: -sample' data-desc="LDAP root password in config">
+                        <div class="dork-query">inurl:"slapd.conf" intext:"rootpw"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">LDAP Root Password</div>
+                            <div class="dork-explain">Specifically targets slapd.conf files that contain the rootpw field — the root password for the entire LDAP directory, in cleartext or hashed form.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:ini ws_ftp pwd' data-desc="WS_FTP client credentials">
+                        <div class="dork-query">filetype:ini ws_ftp pwd</div>
+                        <div class="dork-info">
+                            <div class="dork-title">WS_FTP Credentials</div>
+                            <div class="dork-explain">WS_FTP config files using an extremely weak encryption method for stored passwords. These are easily crackable using publicly available tools.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:pem intext:private' data-desc="Private SSL/TLS key files">
+                        <div class="dork-query">filetype:pem intext:private</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Exposed Private Keys (.pem)</div>
+                            <div class="dork-explain">Private key files used for SSL/TLS encryption. If exposed, attackers can decrypt all traffic to/from the server and impersonate it entirely.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:cfg ks intext:rootpw -sample -test -howto' data-desc="Anaconda Linux installer root passwords">
+                        <div class="dork-query">filetype:cfg ks intext:rootpw -sample</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Linux Kickstart Root Passwords</div>
+                            <div class="dork-explain">Anaconda (Linux installer) config files sometimes contain root passwords in cleartext or MD5 hash. These are used for automated server provisioning.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:zebra.conf intext:password -sample -test' data-desc="GNU Zebra routing daemon config">
+                        <div class="dork-query">inurl:zebra.conf intext:password -sample</div>
+                        <div class="dork-info">
+                            <div class="dork-title">GNU Zebra Routing Config</div>
+                            <div class="dork-explain">GNU Zebra manages TCP/IP routing protocols. Config files contain enable passwords and full routing topology — same format as Cisco IOS configs.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='+htpasswd +WS_FTP.LOG filetype:log' data-desc="FTP log files with htpasswd paths">
+                        <div class="dork-query">+htpasswd +WS_FTP.LOG filetype:log</div>
+                        <div class="dork-info">
+                            <div class="dork-title">FTP Logs with Auth Paths</div>
+                            <div class="dork-explain">WS_FTP log files revealing server paths, combined with htpasswd references. Often leads to discovering the location of authentication credential files.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAMERAS -->
+            <div class="dork-panel" id="panel-cameras">
+                <div class="panel-intro">Find publicly accessible IP cameras and video surveillance feeds.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='inurl:"ViewerFrame?Mode="' data-desc="Panasonic IP cameras">
+                        <div class="dork-query">inurl:"ViewerFrame?Mode="</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Panasonic Network Cameras</div>
+                            <div class="dork-explain">Panasonic IP cameras accessible from a standard browser. The admin page at /config.html often has no credentials or uses factory defaults.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:indexFrame.shtml Axis' data-desc="Axis network camera feeds">
+                        <div class="dork-query">inurl:indexFrame.shtml Axis</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Axis Network Cameras</div>
+                            <div class="dork-explain">AXIS cameras use an embedded web server. The admin button on the indexFrame page often works with default credentials. Directories may also be browsable.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='(intext:"MOBOTIX M1" | intext:"MOBOTIX M10") intext:"Open Menu"' data-desc="Mobotix network cameras">
+                        <div class="dork-query">(intext:"MOBOTIX M1" | intext:"MOBOTIX M10") intext:"Open Menu"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Mobotix Network Cameras</div>
+                            <div class="dork-explain">Mobotix cameras using thttpd web server. High image quality feeds accessible via browser. Many are left with the Open Menu exposed to public internet.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"WJ-NT104 Main Page"' data-desc="Panasonic WJ-NT104 cameras">
+                        <div class="dork-query">intitle:"WJ-NT104 Main Page"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Panasonic WJ-NT104 Cameras</div>
+                            <div class="dork-explain">Panasonic WJ-NT104 multi-camera monitoring system. Accessible from any browser with default credentials frequently unchanged.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"snc-z20" inurl:home/' data-desc="Sony SNC-RZ20 cameras">
+                        <div class="dork-query">intitle:"snc-z20" inurl:home/</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Sony SNC-RZ20 Cameras</div>
+                            <div class="dork-explain">Sony SNC-RZ20 network cameras accessible from any Java-capable browser. Admin panel accessible at /home/l4/admin.html with default credentials.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:"view/view.shtml"' data-desc="Generic camera web interfaces">
+                        <div class="dork-query">inurl:"view/view.shtml"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Generic IP Camera Viewer</div>
+                            <div class="dork-explain">Common URL pattern for web-accessible IP camera viewer interfaces. Works across multiple brands and models of network surveillance cameras.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Live View / - AXIS"' data-desc="Live Axis camera feeds">
+                        <div class="dork-query">intitle:"Live View / - AXIS"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Axis Live Camera Feeds</div>
+                            <div class="dork-explain">Direct live video feed pages from Axis cameras. The title pattern is consistent across Axis models — no authentication required on many installations.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NETWORK -->
+            <div class="dork-panel" id="panel-network">
+                <div class="panel-intro">Discover network infrastructure, routers, printers, and exposed services.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='intitle:"ADSL Configuration page"' data-desc="ADSL modem configuration pages">
+                        <div class="dork-query">intitle:"ADSL Configuration page"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ADSL Modem Config Pages</div>
+                            <div class="dork-explain">Solwise ADSL modem status screens exposing IP addresses, MAC addresses, subnet masks, and firmware versions — useful for network reconnaissance.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"Version Info" "Boot Version" "Internet Settings"' data-desc="Belkin router status pages">
+                        <div class="dork-query">"Version Info" "Boot Version" "Internet Settings"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Belkin Router Status Pages</div>
+                            <div class="dork-explain">Belkin Cable/DSL gateway status pages with IP addresses, WAN addresses, MAC addresses, firmware versions, encryption settings, and SSID — a full network profile.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:":631/printers" OR inurl:"hp/device/this.LCDispatcher"' data-desc="Network printer web interfaces">
+                        <div class="dork-query">inurl:":631/printers"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Exposed Network Printers</div>
+                            <div class="dork-explain">Network printers with web management interfaces exposed to the internet. Attackers can intercept print jobs, retrieve stored documents, or pivot through the network.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"View and Configure PhaserLink"' data-desc="Xerox Phaser printer control panels">
+                        <div class="dork-query">intitle:"View and Configure PhaserLink"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Xerox Phaser Printer Config</div>
+                            <div class="dork-explain">Xerox Phaser printer configuration panels with completely open access. Can contain POP3 server credentials and allow full printer reconfiguration.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Welcome to ntop!"' data-desc="ntop network traffic monitors">
+                        <div class="dork-query">intitle:"Welcome to ntop!"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ntop Network Monitor</div>
+                            <div class="dork-explain">ntop shows real-time network usage listing all hosts and their IP traffic. Attackers can map the internal network, discover services, and identify targets behind a firewall.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"Looking Glass" (inurl:"lg/" | inurl:lookingglass)' data-desc="Network looking glass tools">
+                        <div class="dork-query">"Looking Glass" (inurl:"lg/" | inurl:lookingglass)</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Network Looking Glass</div>
+                            <div class="dork-explain">Looking Glass scripts execute queries on remote routers and return results. Useful for network mapping — reveals BGP routes, traceroutes, and ASN information.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:cfg mrtg "target[*]" -sample -cvs -example' data-desc="MRTG SNMP monitoring configs">
+                        <div class="dork-query">filetype:cfg mrtg "target[*]" -sample</div>
+                        <div class="dork-info">
+                            <div class="dork-title">MRTG SNMP Configuration</div>
+                            <div class="dork-explain">MRTG config files for polling SNMP devices contain community strings (often "public") — allowing direct SNMP queries to gather network device data.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:vsd vsd network -samples -examples' data-desc="Network diagram files (Visio)">
+                        <div class="dork-query">filetype:vsd vsd network -samples -examples</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Visio Network Diagrams</div>
+                            <div class="dork-explain">Microsoft Visio network diagrams revealing full network topology including internal IPs, firewall locations, protocols, and device types.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:domcfg.nsf' data-desc="Lotus Domino servers">
+                        <div class="dork-query">inurl:domcfg.nsf</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Lotus Domino Servers</div>
+                            <div class="dork-explain">Lists servers running Lotus Domino with descriptive error messages exposing path and OS information. Login Form Mapping reveals detailed server configuration.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PEOPLE INTEL -->
+            <div class="dork-panel" id="panel-intel">
+                <div class="panel-intro">Gather intelligence on individuals — emails, social profiles, contact info, and communications.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='intext:"@gmail.com" OR intext:"@yahoo.com" filetype:xls OR filetype:xlsx' data-desc="Email lists in spreadsheets">
+                        <div class="dork-query">intext:"@gmail.com" filetype:xls OR filetype:xlsx</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Email Lists in Spreadsheets</div>
+                            <div class="dork-explain">Spreadsheet files containing email addresses. Often exported contact lists from email clients or CRM systems — can contain names, phones, and full profiles.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='site:linkedin.com "at company" "email"' data-desc="LinkedIn profiles with contact info">
+                        <div class="dork-query">site:linkedin.com "at company" "email"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">LinkedIn Contact Profiles</div>
+                            <div class="dork-explain">Search LinkedIn for profiles mentioning email addresses publicly. Replace "company" with a target organization name for targeted employee enumeration.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:intranet inurl:intranet +intext:"phone"' data-desc="Internal company phone directories">
+                        <div class="dork-query">intitle:intranet inurl:intranet +intext:"phone"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Internal Phone Directories</div>
+                            <div class="dork-explain">Private intranet pages accidentally exposed to the internet containing employee phone listings and email addresses — a digital dumpster dive into company personnel data.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:intranet inurl:intranet +intext:"human resources"' data-desc="Exposed company intranet portals">
+                        <div class="dork-query">intitle:intranet inurl:intranet +intext:"human resources"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Exposed Company Intranets</div>
+                            <div class="dork-explain">Internal company networks exposed to the public internet. HR sections can contain employee directories, organization charts, and internal documentation.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='inurl:forward filetype:forward -cvs' data-desc="Unix email forward files">
+                        <div class="dork-query">inurl:forward filetype:forward -cvs</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Unix Email Forwarding Files</div>
+                            <div class="dork-explain">Unix .forward files placed in home directories to redirect email. These files reveal email addresses and can help map out an organization's email structure.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:ctt ctt messenger' data-desc="MSN Messenger contact lists">
+                        <div class="dork-query">filetype:ctt ctt messenger</div>
+                        <div class="dork-info">
+                            <div class="dork-title">MSN Messenger Contact Lists</div>
+                            <div class="dork-explain">Exported MSN Messenger contact lists (.ctt extension). Contains screen names and contacts of the owner — useful for social engineering and identity research.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:blt blt +intext:screenname' data-desc="AIM buddy lists">
+                        <div class="dork-query">filetype:blt blt +intext:screenname</div>
+                        <div class="dork-info">
+                            <div class="dork-title">AIM Buddy Lists</div>
+                            <div class="dork-explain">AOL Instant Messenger buddy list files revealing screen names and the user's full contact network including buddy and blocked lists.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"HTTP_FROM=googlebot" googlebot.com "Server_Software="' data-desc="Googlebot crawl traces with server info">
+                        <div class="dork-query">"HTTP_FROM=googlebot" "Server_Software="</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Server Crawl Trace Pages</div>
+                            <div class="dork-explain">Pages that collected trace data when Googlebot crawled them. Reveals path names, header information, server software versions — useful for attack surface mapping.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VULNERABILITIES -->
+            <div class="dork-panel" id="panel-vulnerabilities">
+                <div class="panel-intro">Find error messages, injection points, and exposed vulnerability indicators.</div>
+                <div class="dorks-list">
+                    <div class="dork-item" data-dork='intext:"sql syntax near" OR intext:"syntax error" OR intext:"mysql_fetch"' data-desc="SQL error messages indicating injection points">
+                        <div class="dork-query">intext:"sql syntax near" OR intext:"mysql_fetch"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">SQL Error Messages</div>
+                            <div class="dork-explain">Pages showing SQL error messages are strong indicators of SQL injection vulnerabilities. These errors expose database structure, table names, and query parameters.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Error Occurred While Processing Request" +WHERE (SELECT|INSERT) filetype:cfm' data-desc="ColdFusion SQL injection points">
+                        <div class="dork-query">intitle:"Error Occurred While Processing Request"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ColdFusion SQL Errors</div>
+                            <div class="dork-explain">ColdFusion error pages logging SQL SELECT or INSERT statements. These reveal full file paths and exact injection parameters on the server.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intext:"Warning: Failed opening" "on line" "include_path"' data-desc="PHP include path errors">
+                        <div class="dork-query">intext:"Warning: Failed opening" "include_path"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP File Include Errors</div>
+                            <div class="dork-explain">PHP warning messages revealing application paths, filename structures, and include paths — useful for identifying local file inclusion vulnerabilities.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"Request Details" "Control Tree" "Server Variables"' data-desc="ASP.NET trace pages">
+                        <div class="dork-query">"Request Details" "Control Tree" "Server Variables"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ASP.NET Trace Pages</div>
+                            <div class="dork-explain">ASP.NET trace pages expose session IDs, stack traces, port numbers, IP addresses, full paths, and HTTP headers — a goldmine for attack planning.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:php inurl:"viewfile" -"index.php"' data-desc="PHP file viewer scripts">
+                        <div class="dork-query">filetype:php inurl:"viewfile" -"index.php"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP File Viewer Scripts</div>
+                            <div class="dork-explain">PHP scripts designed to view server files via URL parameters. Often vulnerable to directory traversal attacks — try appending /../../../etc/passwd to the URL.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"Index of /" modified php.exe' data-desc="PHP CGI on Windows Apache">
+                        <div class="dork-query">intitle:"Index of /" modified php.exe</div>
+                        <div class="dork-info">
+                            <div class="dork-title">PHP-CGI on Windows Apache</div>
+                            <div class="dork-explain">PHP installed as CGI on Windows Apache allows arbitrary file reads via path injection: /php/php.exe?c:\boot.ini — a classic arbitrary file disclosure.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"htsearch error" ht://Dig error' data-desc="ht://Dig directory traversal">
+                        <div class="dork-query">intitle:"htsearch error" ht://Dig error</div>
+                        <div class="dork-info">
+                            <div class="dork-title">ht://Dig Search Errors</div>
+                            <div class="dork-explain">ht://Dig errors expose admin email, cgi-bin path, directory structure, and database locations. Older versions (3.1.1–3.2) vulnerable to directory traversal.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='intitle:"index of" inurl:recycler' data-desc="Windows Recycle Bin exposed on web">
+                        <div class="dork-query">intitle:"index of" inurl:recycler</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Exposed Windows Recycle Bin</div>
+                            <div class="dork-explain">Default Windows recycle bin folder exposed on a web server. Files here may contain deleted sensitive documents, and SIDs (Security Identifiers) of users are revealed.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='filetype:log access.log -CVS' data-desc="HTTP server access logs">
+                        <div class="dork-query">filetype:log access.log -CVS</div>
+                        <div class="dork-info">
+                            <div class="dork-title">HTTP Access Logs</div>
+                            <div class="dork-explain">Web server access logs containing full request history — usernames, passwords from basic auth, trusted machine IPs, full server paths, and query parameters.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                    <div class="dork-item" data-dork='"Invision Power Board Database Error"' data-desc="Invision Board SQL errors">
+                        <div class="dork-query">"Invision Power Board Database Error"</div>
+                        <div class="dork-info">
+                            <div class="dork-title">Invision Board SQL Errors</div>
+                            <div class="dork-explain">SQL error messages from Invision Power Board forums including connection errors, access denied messages, and full PHP file paths on the webserver.</div>
+                        </div>
+                        <button class="use-btn">Use ↗</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <span class="footer-brand">◈ DorkLab</span>
+    <span class="footer-note">For authorized security research and OSINT only.</span>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
