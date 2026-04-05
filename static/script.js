@@ -1,185 +1,181 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const searchForm = document.getElementById('searchForm');
-    const searchQuery = document.getElementById('searchQuery');
-    const siteFilter = document.getElementById('siteFilter');
-    const resultsContainer = document.getElementById('results');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const exampleItems = document.querySelectorAll('.example-item');
+document.addEventListener('DOMContentLoaded', () => {
 
-    // Handle form submission
-    searchForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        performSearch();
+    // ── Elements ──────────────────────────────────────────────────
+    const queryInput  = document.getElementById('searchQuery');
+    const siteInput   = document.getElementById('siteFilter');
+    const buildBtn    = document.getElementById('buildBtn');
+    const clearBtn    = document.getElementById('clearBtn');
+    const outputBox   = document.getElementById('outputBox');
+    const outputQuery = document.getElementById('outputQuery');
+    const openGoogle  = document.getElementById('openGoogle');
+    const copyDork    = document.getElementById('copyDork');
+    const intentBadges = document.getElementById('intentBadges');
+    const tabBar      = document.getElementById('tabBar');
+
+    // ── Tab switcher ──────────────────────────────────────────────
+    tabBar.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.dork-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const panel = document.getElementById('panel-' + tab.dataset.tab);
+        if (panel) panel.classList.add('active');
     });
 
-    // Handle filter button clicks
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            searchQuery.value = this.dataset.filter;
-            performSearch();
+    // ── Dork library "Use" buttons ────────────────────────────────
+    document.querySelectorAll('.use-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const item = btn.closest('.dork-item');
+            const dorkQuery = item.dataset.dork;
+            queryInput.value = dorkQuery;
+            buildQuery(dorkQuery);
+            // flash
+            btn.classList.add('flash');
+            btn.textContent = '✓ Loaded';
+            setTimeout(() => {
+                btn.classList.remove('flash');
+                btn.textContent = 'Use ↗';
+            }, 1400);
+            // scroll to builder
+            document.querySelector('.query-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 
-    // Handle example clicks
-    exampleItems.forEach(item => {
-        item.addEventListener('click', function() {
-            searchQuery.value = this.dataset.example;
-            performSearch();
+    // Also clicking the dork-item row (excluding button)
+    document.querySelectorAll('.dork-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (e.target.classList.contains('use-btn')) return;
+            const btn = item.querySelector('.use-btn');
+            btn.click();
         });
     });
 
-    // Handle suggestion clicks
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('suggestion-item')) {
-            searchQuery.value = e.target.textContent;
-            performSearch();
-        }
-    });
-
-    async function performSearch() {
-        const query = searchQuery.value.trim();
-        const site = siteFilter.value.trim();
-
+    // ── Build button ──────────────────────────────────────────────
+    buildBtn.addEventListener('click', () => {
+        const query = queryInput.value.trim();
         if (!query) {
-            alert('Please enter a search query');
+            shake(queryInput);
             return;
         }
+        buildQuery(query);
+    });
 
-        try {
-            const response = await fetch('/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    query: query,
-                    site: site
-                })
-            });
+    queryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') buildBtn.click();
+    });
 
-            const data = await response.json();
+    // ── Clear ─────────────────────────────────────────────────────
+    clearBtn.addEventListener('click', () => {
+        queryInput.value = '';
+        siteInput.value = '';
+        outputBox.classList.add('hidden');
+        queryInput.focus();
+    });
 
-            if (response.ok) {
-                displayResults(data);
-            } else {
-                alert('Error: ' + data.error);
+    // ── Build logic ───────────────────────────────────────────────
+    function buildQuery(rawQuery) {
+        const site = siteInput.value.trim();
+        let finalQuery = rawQuery;
+
+        // Append site: if provided
+        if (site) {
+            // If query doesn't already have site:
+            if (!finalQuery.includes('site:')) {
+                finalQuery += ` site:${site}`;
             }
-        } catch (error) {
-            alert('Network error: ' + error.message);
-        }
-    }
-
-    function displayResults(data) {
-        // Show results container
-        resultsContainer.style.display = 'block';
-        resultsContainer.scrollIntoView({ behavior: 'smooth' });
-
-        // Update query info
-        document.getElementById('queryInfo').textContent = 
-            `Original query: "${data.original_query}" → Enhanced with intelligent operators`;
-
-        // Update dork query
-        document.getElementById('dorkQuery').textContent = data.dork_query;
-
-        // Update detected intents
-        const intentSection = document.getElementById('intentSection');
-        const intentsContainer = document.getElementById('detectedIntents');
-        
-        if (data.detected_intents && data.detected_intents.length > 0) {
-            intentSection.style.display = 'block';
-            intentsContainer.innerHTML = '';
-            
-            data.detected_intents.forEach(intent => {
-                const tag = document.createElement('span');
-                tag.className = 'intent-tag';
-                tag.textContent = `${intent[0]}: ${intent[1]}`;
-                intentsContainer.appendChild(tag);
-            });
-        } else {
-            intentSection.style.display = 'none';
         }
 
-        // Update suggestions
-        const suggestionSection = document.getElementById('suggestionSection');
-        const suggestionsContainer = document.getElementById('suggestions');
-        
-        if (data.suggestions && data.suggestions.length > 0) {
-            suggestionSection.style.display = 'block';
-            suggestionsContainer.innerHTML = '';
-            
-            data.suggestions.forEach(suggestion => {
-                const item = document.createElement('span');
-                item.className = 'suggestion-item';
-                item.textContent = suggestion;
-                suggestionsContainer.appendChild(item);
-            });
-        } else {
-            suggestionSection.style.display = 'none';
-        }
+        const url = `https://www.google.com/search?q=${encodeURIComponent(finalQuery)}`;
 
-        // Setup action buttons
-        setupActionButtons(data);
+        outputQuery.textContent = finalQuery;
+        outputBox.classList.remove('hidden');
+
+        // Detect intent badges
+        const intents = detectIntents(rawQuery);
+        intentBadges.innerHTML = '';
+        intents.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'intent-badge';
+            span.textContent = tag;
+            intentBadges.appendChild(span);
+        });
+
+        // Wire buttons
+        openGoogle.onclick = () => window.open(url, '_blank');
+        copyDork.onclick = () => copyToClipboard(finalQuery, copyDork);
+
+        outputBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    function setupActionButtons(data) {
-        // Open in Google button
-        document.getElementById('openGoogle').onclick = function() {
-            window.open(data.google_url, '_blank');
-        };
-
-        // Copy query button
-        document.getElementById('copyQuery').onclick = function() {
-            navigator.clipboard.writeText(data.dork_query).then(function() {
-                const btn = document.getElementById('copyQuery');
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(function() {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = data.dork_query;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                const btn = document.getElementById('copyQuery');
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
-        };
-
-        // New search button
-        document.getElementById('newSearch').onclick = function() {
-            resultsContainer.style.display = 'none';
-            searchQuery.value = '';
-            siteFilter.value = '';
-            searchQuery.focus();
-        };
+    // ── Intent detector for badges ────────────────────────────────
+    function detectIntents(q) {
+        const ql = q.toLowerCase();
+        const tags = [];
+        if (ql.includes('filetype:')) tags.push('filetype filter');
+        if (ql.includes('inurl:'))   tags.push('url targeting');
+        if (ql.includes('intitle:')) tags.push('title match');
+        if (ql.includes('intext:'))  tags.push('body search');
+        if (ql.includes('site:'))    tags.push('site scoped');
+        if (ql.includes('password') || ql.includes('passwd')) tags.push('credential hunt');
+        if (ql.includes('login') || ql.includes('signin'))   tags.push('auth page');
+        if (ql.includes('index of'))  tags.push('dir listing');
+        if (ql.includes('filetype:sql') || ql.includes('filetype:mdb') || ql.includes('mysql')) tags.push('database');
+        if (ql.includes('.conf') || ql.includes('config') || ql.includes('.ini')) tags.push('config file');
+        if (ql.includes('camera') || ql.includes('viewerframe') || ql.includes('shtml')) tags.push('camera/iot');
+        return tags;
     }
 
-    // Auto-focus search input
-    searchQuery.focus();
+    // ── Clipboard ─────────────────────────────────────────────────
+    function copyToClipboard(text, btn) {
+        const orig = btn.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = 'Copied ✓';
+            setTimeout(() => btn.textContent = orig, 2000);
+        }).catch(() => {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            btn.textContent = 'Copied ✓';
+            setTimeout(() => btn.textContent = orig, 2000);
+        });
+    }
 
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // Ctrl/Cmd + K to focus search
+    // ── Shake animation for empty input ──────────────────────────
+    function shake(el) {
+        el.style.animation = 'none';
+        el.style.borderColor = 'var(--red)';
+        el.style.boxShadow = '0 0 0 3px rgba(255,69,96,0.2)';
+        setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+        }, 800);
+        el.focus();
+    }
+
+    // ── Keyboard shortcuts ────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + K → focus query input
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
-            searchQuery.focus();
+            queryInput.focus();
+            queryInput.select();
         }
-        
-        // Escape to clear and hide results
+        // Escape → hide output
         if (e.key === 'Escape') {
-            if (resultsContainer.style.display !== 'none') {
-                resultsContainer.style.display = 'none';
-                searchQuery.focus();
+            if (!outputBox.classList.contains('hidden')) {
+                outputBox.classList.add('hidden');
             }
         }
     });
+
+    // ── Auto focus ────────────────────────────────────────────────
+    queryInput.focus();
 });
