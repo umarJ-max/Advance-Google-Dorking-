@@ -1,175 +1,89 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import re
 import urllib.parse
+import json
+import os
 
 app = Flask(__name__)
 
-class DorkingEngine:
-    def __init__(self):
-        self.dork_patterns = {
-            'files': {
-                'pdf': 'filetype:pdf',
-                'doc': 'filetype:doc OR filetype:docx',
-                'xls': 'filetype:xls OR filetype:xlsx',
-                'ppt': 'filetype:ppt OR filetype:pptx',
-                'txt': 'filetype:txt',
-                'sql': 'filetype:sql',
-                'log': 'filetype:log',
-                'config': 'filetype:conf OR filetype:config OR filetype:cfg'
-            },
-            'vulnerabilities': {
-                'login': 'inurl:login OR inurl:signin OR inurl:admin',
-                'database': 'inurl:phpmyadmin OR inurl:mysql OR inurl:database',
-                'backup': 'filetype:bak OR filetype:backup OR filetype:old',
-                'error': 'intext:"sql syntax near" OR intext:"syntax error" OR intext:"mysql_fetch"',
-                'directory': 'intitle:"index of" OR intitle:"directory listing"'
-            },
-            'social': {
-                'profiles': 'site:linkedin.com OR site:facebook.com OR site:twitter.com',
-                'emails': 'intext:"@gmail.com" OR intext:"@yahoo.com" OR intext:"@hotmail.com"'
-            },
-            'tech': {
-                'cameras': 'inurl:"view/live" OR inurl:"ViewerFrame?Mode="',
-                'printers': 'inurl:":631/printers" OR inurl:"hp/device"',
-                'routers': 'inurl:"admin/login" OR inurl:"router" OR inurl:"gateway"'
-            }
-        }
-    
-    def analyze_query(self, query):
-        query_lower = query.lower()
-        detected_intent = []
-        
-        # File type detection
-        file_extensions = ['pdf', 'doc', 'xls', 'txt', 'sql', 'log', 'config']
-        for ext in file_extensions:
-            if ext in query_lower or f'.{ext}' in query_lower:
-                detected_intent.append(('files', ext))
-        
-        # Vulnerability keywords
-        vuln_keywords = {
-            'login': ['login', 'signin', 'admin panel', 'authentication'],
-            'database': ['database', 'mysql', 'phpmyadmin', 'sql'],
-            'backup': ['backup', 'old files', 'bak'],
-            'error': ['error', 'sql error', 'debug'],
-            'directory': ['directory', 'index of', 'listing']
-        }
-        
-        for vuln_type, keywords in vuln_keywords.items():
-            if any(keyword in query_lower for keyword in keywords):
-                detected_intent.append(('vulnerabilities', vuln_type))
-        
-        # Social media detection
-        if any(word in query_lower for word in ['profile', 'social', 'linkedin', 'facebook']):
-            detected_intent.append(('social', 'profiles'))
-        
-        if any(word in query_lower for word in ['email', 'contact', '@']):
-            detected_intent.append(('social', 'emails'))
-        
-        # Tech detection
-        tech_keywords = {
-            'cameras': ['camera', 'webcam', 'surveillance'],
-            'printers': ['printer', 'print server'],
-            'routers': ['router', 'gateway', 'modem']
-        }
-        
-        for tech_type, keywords in tech_keywords.items():
-            if any(keyword in query_lower for keyword in keywords):
-                detected_intent.append(('tech', tech_type))
-        
-        return detected_intent
-    
-    def build_dork_query(self, original_query, site=None):
-        intents = self.analyze_query(original_query)
-        dork_parts = []
-        
-        # Add original query terms (cleaned)
-        clean_query = re.sub(r'\b(find|search|get|download|show|list)\b', '', original_query, flags=re.IGNORECASE).strip()
-        
-        if clean_query:
-            # Extract main keywords
-            keywords = [word for word in clean_query.split() if len(word) > 2]
-            if keywords:
-                dork_parts.append(' '.join(keywords))
-        
-        # Add detected dork patterns
-        for category, subcategory in intents:
-            if category in self.dork_patterns and subcategory in self.dork_patterns[category]:
-                dork_parts.append(self.dork_patterns[category][subcategory])
-        
-        # Add site restriction if provided
-        if site:
-            dork_parts.append(f'site:{site}')
-        
-        # If no specific patterns detected, use general search enhancement
-        if len(dork_parts) == 1:  # Only original query
-            if any(word in original_query.lower() for word in ['confidential', 'private', 'internal']):
-                dork_parts.append('filetype:pdf OR filetype:doc')
-        
-        return ' '.join(dork_parts)
-    
-    def generate_google_url(self, dork_query):
-        encoded_query = urllib.parse.quote_plus(dork_query)
-        return f"https://www.google.com/search?q={encoded_query}"
-
-dorking_engine = DorkingEngine()
+# Load dorks database
+DORKS_PATH = os.path.join(os.path.dirname(__file__), 'static', 'dorks.json')
+with open(DORKS_PATH, 'r') as f:
+    DORKS_DB = json.load(f)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/search', methods=['POST'])
-def search():
+@app.route('/api/dorks')
+def get_dorks():
+    """Return full dorks database"""
+    return jsonify(DORKS_DB)
+
+@app.route('/api/dorks/search')
+def search_dorks():
+    """Search dorks by query, category, severity, or tag"""
+    q = request.args.get('q', '').lower().strip()
+    category = request.args.get('category', '').strip()
+    severity = request.args.get('severity', '').strip()
+    tag = request.args.get('tag', '').strip()
+
+    results = []
+    for cat in DORKS_DB['categories']:
+        if category and cat['id'] != category:
+            continue
+        for dork in cat['dorks']:
+            match = True
+            if q and not (
+                q in dork['query'].lower() or
+                q in dork['title'].lower() or
+                q in dork['description'].lower() or
+                any(q in t for t in dork.get('tags', []))
+            ):
+                match = False
+            if severity and dork.get('severity') != severity:
+                match = False
+            if tag and tag not in dork.get('tags', []):
+                match = False
+            if match:
+                results.append({**dork, 'category': cat['id'], 'category_label': cat['label'], 'category_icon': cat['icon']})
+
+    return jsonify({'results': results, 'count': len(results)})
+
+@app.route('/api/build', methods=['POST'])
+def build_query():
+    """Build and return a Google search URL from a dork query"""
     data = request.get_json()
-    query = data.get('query', '')
-    site = data.get('site', '')
-    
+    query = data.get('query', '').strip()
+    site = data.get('site', '').strip()
+
     if not query:
         return jsonify({'error': 'Query is required'}), 400
-    
-    # Build the dork query
-    dork_query = dorking_engine.build_dork_query(query, site if site else None)
-    google_url = dorking_engine.generate_google_url(dork_query)
-    
-    # Analyze what was detected
-    intents = dorking_engine.analyze_query(query)
-    
+
+    final_query = query
+    if site and 'site:' not in query:
+        final_query += f' site:{site}'
+
+    encoded = urllib.parse.quote_plus(final_query)
+    google_url = f'https://www.google.com/search?q={encoded}'
+
     return jsonify({
-        'original_query': query,
-        'dork_query': dork_query,
-        'google_url': google_url,
-        'detected_intents': intents,
-        'suggestions': generate_suggestions(query)
+        'query': final_query,
+        'google_url': google_url
     })
 
-def generate_suggestions(query):
-    suggestions = []
-    query_lower = query.lower()
-    
-    if 'login' in query_lower:
-        suggestions.extend([
-            'admin panels on specific domain',
-            'default login pages',
-            'authentication bypasses'
-        ])
-    
-    if any(ext in query_lower for ext in ['pdf', 'doc', 'file']):
-        suggestions.extend([
-            'confidential documents',
-            'backup files',
-            'configuration files'
-        ])
-    
-    if 'database' in query_lower:
-        suggestions.extend([
-            'exposed databases',
-            'SQL dump files',
-            'database admin panels'
-        ])
-    
-    return suggestions[:3]  # Limit to 3 suggestions
-
-# For Vercel deployment
-app = app  # Ensure app is available at module level
+@app.route('/api/stats')
+def stats():
+    """Return database statistics"""
+    total = sum(len(c['dorks']) for c in DORKS_DB['categories'])
+    categories = [{'id': c['id'], 'label': c['label'], 'icon': c['icon'], 'count': len(c['dorks'])} for c in DORKS_DB['categories']]
+    return jsonify({
+        'total_dorks': total,
+        'total_categories': len(DORKS_DB['categories']),
+        'categories': categories,
+        'version': DORKS_DB['meta']['version'],
+        'updated': DORKS_DB['meta']['updated']
+    })
 
 if __name__ == '__main__':
     app.run(debug=False)
